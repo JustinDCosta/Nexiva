@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    function validText(field, min, max) {
+      return field is string && field.size() >= min && field.size() <= max;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /preferences/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /integrations/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /analytics/{docId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+
+      match /gamification/{docId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+    }
+
+    match /calendarSyncJobs/{jobId} {
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.ownerId)
+        && request.resource.data.mode is string;
+
+      allow read, update, delete: if isOwner(resource.data.ownerId);
+    }
+
+    match /routines/{routineId} {
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.ownerId)
+        && validText(request.resource.data.name, 1, 120);
+
+      allow read, update, delete: if isOwner(resource.data.ownerId);
+
+      allow update: if isOwner(resource.data.ownerId)
+        && validText(request.resource.data.name, 1, 120);
+    }
+
+    match /timeBlocks/{blockId} {
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.ownerId)
+        && request.resource.data.durationMinutes is int
+        && request.resource.data.durationMinutes > 0
+        && request.resource.data.durationMinutes <= 720;
+
+      allow read, update, delete: if isOwner(resource.data.ownerId);
+
+      allow update: if isOwner(resource.data.ownerId)
+        && request.resource.data.durationMinutes is int
+        && request.resource.data.durationMinutes > 0
+        && request.resource.data.durationMinutes <= 720;
+    }
+
+    match /ideas/{ideaId} {
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.ownerId)
+        && validText(request.resource.data.title, 1, 160);
+
+      allow read, update, delete: if isOwner(resource.data.ownerId);
+
+      allow update: if isOwner(resource.data.ownerId)
+        && validText(request.resource.data.title, 1, 160);
+    }
+
+    match /feasibilityAssessments/{assessmentId} {
+      allow create: if isSignedIn() && isOwner(request.resource.data.ownerId);
+      allow read, update, delete: if isOwner(resource.data.ownerId);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

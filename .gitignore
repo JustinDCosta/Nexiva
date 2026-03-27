@@ -1,0 +1,24 @@
+# Flutter
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/pubspec.lock
+
+# Android/iOS temp
+**/.gradle/
+**/android/.gradle/
+
+# Firebase / Node
+firebase/functions/node_modules/
+firebase/functions/lib/
+firebase/functions/.env
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
